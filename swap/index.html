@@ -310,7 +310,7 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
     <script>
         const tokens = [
-            { address: "0x6a267196D0B330283416F19DFA0Cf75511BA83bE", symbol: "STAR", logo: "https://woofswap.finance/image/tokens/edog.png" }
+            { address: "0x6a267196D0B330283416F19DFA0Cf75511BA83bE", symbol: "EDOG", logo: "https://woofswap.finance/image/tokens/edog.png" }
         ];
         const ELONToken = { address: "0x19ecB643988dB8beA1Ff528E6D91dB559b70F181", symbol: "ELON", logo: "https://woofingjace.com/images/elon.png", isNative: true };
         const routerAddress = "0xF3BC0C7acf2FBD4A4E545ce770Bf909033e2F899";
@@ -338,7 +338,7 @@
             {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"type":"function"}
         ];
         const XLayer = {
-            chainId: 196,
+            chainId: 2420,
             chainName: 'Rufus Chain',
             nativeCurrency: { name: 'ELON', symbol: 'ELON', decimals: 18 },
             rpcUrls: ['https://rufus.calderachain.xyz/http'],
@@ -354,8 +354,8 @@
         const maxPriceImpact = 0.5;
 
         const dogMessages = {
-            connectStart: ["Woof woof! Sniffing out your wallet, hold tight, human!","Arf! Digging into X Layer, let’s fetch that wallet!","Bow wow! Connecting to your stash, stay pawsitive!","Woof! I smell a wallet, let’s link it up quick!"],
-            connectSuccess: ["Arf arf! You’re in, pup! Time to chase some ELONs!","Woof! Wallet’s hooked, ready to roll in X Layer!","Yip yip! Connected, hooman! Let’s swap some treats!","Bow wow! Welcome aboard, let’s sniff out some swaps!"],
+            connectStart: ["Woof woof! Sniffing out your wallet, hold tight, human!","Arf! Digging into Rufus Chain, let’s fetch that wallet!","Bow wow! Connecting to your stash, stay pawsitive!","Woof! I smell a wallet, let’s link it up quick!"],
+            connectSuccess: ["Arf arf! You’re in, pup! Time to chase some ELONs!","Woof! Wallet’s hooked, ready to roll in Rufus Chain!","Yip yip! Connected, hooman! Let’s swap some treats!","Bow wow! Welcome aboard, let’s sniff out some swaps!"],
             connectFail: ["Grrr... Wallet slipped away, try again, hooman!","Woof? No wallet scent detected, give it another go!","Arf arf! Something barked up, retry connecting, pup!","Ruff! Wallet’s hiding, let’s dig it out again!"],
             tokenModal: ["Woof! Pick a token, let’s sniff out a juicy deal!","Arf! What treat shall we fetch today, hooman?","Bow wow! Tokens galore, choose your fave, pup!","Yip! Time to pick a token to swap, let’s go!"],
             selectToken: (symbol) => [`Arf arf! ${symbol}, huh? Smells like a tasty choice!`,`Woof! ${symbol} caught your eye? Good nose, pup!`,`Bow wow! ${symbol} it is! Let’s wag into action!`,`Yip yip! ${symbol} sounds pawsome, ready to swap?`],
@@ -364,7 +364,7 @@
             calcStart: ["Woof! Sniffing out the best price, hang tight!","Arf! Digging up some swap numbers, stay put, pup!","Bow wow! Crunching ELONs, I’ll fetch the output soon!","Ruff! Calculating your treat, give me a sec, hooman!"],
             calcSuccess: (amount, symbol) => [`Arf! Found ya ${amount} ${symbol}! Ready to swap, pup?`,`Woof woof! Snagged ${amount} ${symbol}, let’s roll!`,`Yip yip! Dug up ${amount} ${symbol}, happy tail wags!`,`Bow wow! ${amount} ${symbol} sniffed out, swap time!`],
             calcFail: ["Grrr... No path for these ELONs, try a new pair, pup!","Woof? Swap trail’s cold, pick another token, hooman!","Arf arf! Couldn’t fetch the output, let’s retry!","Ruff! Swap math barked up, give it another go!"],
-            swapStart: ["Woof woof! Swapping time, let’s fetch those tokens!","Arf! Launching the swap, hold onto your leash, pup!","Bow wow! Trading ELONs, here we go, Jace style!","Yip! Swapping in X Layer, let’s make it pawsome!"],
+            swapStart: ["Woof woof! Swapping time, let’s fetch those tokens!","Arf! Launching the swap, hold onto your leash, pup!","Bow wow! Trading ELONs, here we go, Jace style!","Yip! Swapping in Rufus Chain, let’s make it pawsome!"],
             swapSuccess: ["Arf arf! Swap done, you’re a Jaceswap champ, hooman!","Woof! Tokens fetched, tail-wagging success, pup!","Bow wow! Swapped like a pro, time to celebrate!","Yip yip! Swap complete, you’re the top dog now!"],
             swapFail: ["Grrr... Swap didn’t work, let’s try again, pup!","Woof? Swap got lost, retry it, clever hooman!","Arf! Token chase failed, another go, Jace friend?","Ruff ruff! Swap slipped, let’s dig it up again!"],
             swapNoToken: ["Woof? Missing a token, pup! Pick one first!","Arf arf! No treats to swap, choose a pair, hooman!","Bow wow! Where’s the token? Let’s sniff one out!","Yip! Can’t swap air, pick a token, Jace pal!"],
@@ -420,7 +420,7 @@
 
         async function switchToXLayer() {
             const chainId = await web3.eth.getChainId();
-            if (Number(chainId) !== 196) {
+            if (Number(chainId) !== 2420) {
                 try {
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
@@ -444,7 +444,7 @@
             const status = document.getElementById('networkStatus');
             const dogMessage = document.getElementById('dogMessage');
             connectButton.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
-            status.innerText = "Connected to X Layer";
+            status.innerText = "Connected to Rufus Chain";
             dogMessage.innerText = getRandomMessage('connectSuccess');
         }
 
@@ -479,14 +479,14 @@
                 }
             });
             window.ethereum.on('chainChanged', async (chainId) => {
-                if (parseInt(chainId, 16) !== 196) {
+                if (parseInt(chainId, 16) !== 2420) {
                     web3 = null;
                     account = null;
                     router = null;
                     factory = null;
                     resetUI();
-                    document.getElementById('networkStatus').innerText = "Wrong network. Reconnect to X Layer.";
-                    document.getElementById('dogMessage').innerText = "Woof! Wrong chain, pup! Switch to X Layer!";
+                    document.getElementById('networkStatus').innerText = "Wrong network. Reconnect to Rufus Chain.";
+                    document.getElementById('dogMessage').innerText = "Woof! Wrong chain, pup! Switch to Rufus Chain!";
                 } else if (account) {
                     await connectWallet();
                 }
