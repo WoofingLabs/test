@@ -72,7 +72,7 @@
             font-size: 0.9em;
             margin-bottom: 5px;
         }
-        input, textarea {
+        select, input, textarea {
             width: 100%;
             padding: 10px;
             background: var(--input-bg);
@@ -156,6 +156,8 @@
             .dog-section img { width: 50px; height: 50px; }
             .dog-message { font-size: 0.8em; }
         }
+        #batchTokenAddress { display: none; }
+        #authorizeBatchButton { display: none; }
     </style>
 </head>
 <body>
@@ -166,9 +168,15 @@
             <div id="networkStatus" class="status">Click to connect...</div>
         </div>
         <div class="input-box">
-            <label>Batch Transfer Tokens</label>
+            <label>Transfer Type</label>
+            <select id="transferType">
+                <option value="erc20">ERC20 Token</option>
+                <option value="elon">ELON (Native)</option>
+            </select>
+            <label id="tokenAddressLabel">Token Address</label>
             <input type="text" id="batchTokenAddress" placeholder="Token Address (e.g., 0x...)">
-            <div class="balance-row"><span>Token Balance</span><span id="batchTokenBalance">Balance: 0</span></div>
+            <div class="balance-row"><span id="balanceLabel">Token Balance</span><span id="batchTokenBalance">Balance: 0</span></div>
+            <label>Recipients and Amounts</label>
             <textarea id="batchTransferList" placeholder="Enter one address and amount per line (e.g., 0xAddress,Amount)"></textarea>
             <button class="action-button" id="authorizeBatchButton" disabled>Authorize Token</button>
             <button class="action-button" id="batchTransferButton" disabled>Batch Transfer</button>
@@ -180,7 +188,7 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
     <script>
-        const WoofBatchTransferAddress = '0xF8b511Ef4791c42A9d45Ff4997De30DA4A6f1d0B';
+        const WoofBatchTransferAddress = '0x80dE92120e5c81f1BE3e7Fe0f167179b0bE6B174';
 
         const WoofBatchTransferAbi = [
             {
@@ -195,6 +203,16 @@
                 "type": "function"
             },
             {
+                "inputs": [
+                    { "internalType": "address[]", "name": "recipients", "type": "address[]" },
+                    { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
+                ],
+                "name": "batchNativeTransfer",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
                 "anonymous": false,
                 "inputs": [
                     { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
@@ -203,6 +221,16 @@
                     { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
                 ],
                 "name": "BatchTransfer",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+                    { "internalType": "address[]", "name": "recipients", "type": "address[]" },
+                    { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
+                ],
+                "name": "BatchNativeTransfer",
                 "type": "event"
             }
         ];
@@ -261,7 +289,7 @@
             invalidInput: ["Woof! Invalid address or amount, check your input, pup!", "Arf! Something's not right, check your list!", "Bark! Need valid addresses and amounts!"],
             userDenied: ["Woof! You canceled the transaction, pup!", "Arf! Transaction denied, try again when ready!", "Bark! You said no, let's try that again!"],
             invalidToken: ["Woof! Token address issue, check and try again, pup!", "Arf! Token problem, verify the address!", "Bark! Token error, please check it!"],
-            insufficientBalance: ["Woof! Not enough tokens, check your balance, pup!", "Arf! Token balance too low, top up!", "Bark! Need more tokens to transfer!"],
+            insufficientBalance: ["Woof! Not enough tokens or ELON, check your balance, pup!", "Arf! Balance too low, top up!", "Bark! Need more tokens or ELON to transfer!"],
             insufficientGas: ["Woof! Not enough ELON for gas, pup!", "Arf! Gas funds too low, try again!", "Bark! Need more ELON for gas!"],
             insufficientAllowance: ["Woof! Token not authorized, approve first, pup!", "Arf! Need to authorize token!", "Bark! Approve token before transferring!"]
         };
@@ -352,31 +380,52 @@
                 document.getElementById('batchTokenBalance').innerText = 'Balance: 0';
                 return;
             }
-            const tokenAddress = document.getElementById('batchTokenAddress').value.trim();
-            if (!web3.utils.isAddress(tokenAddress)) {
-                document.getElementById('batchTokenBalance').innerText = 'Balance: Enter valid token address';
-                document.getElementById('authorizeBatchButton').disabled = true;
-                document.getElementById('batchTransferButton').disabled = true;
-                return;
-            }
-            try {
-                tokenContract = new web3.eth.Contract(erc20Abi, web3.utils.toChecksumAddress(tokenAddress));
-                const balance = await tokenContract.methods.balanceOf(account).call();
-                document.getElementById('batchTokenBalance').innerText = `Balance: ${Number(web3.utils.fromWei(balance, 'ether')).toLocaleString()}`;
-                await checkAuthorizationStatus();
-            } catch (error) {
-                console.error("Token status error:", error);
-                document.getElementById('batchTokenBalance').innerText = 'Balance: Check token address';
-                document.getElementById('authorizeBatchButton').disabled = true;
-                document.getElementById('batchTransferButton').disabled = true;
-                document.getElementById('dogMessage').innerText = getRandomMessage('invalidToken');
+            const transferType = document.getElementById('transferType').value;
+            if (transferType === 'elon') {
+                try {
+                    const balance = await web3.eth.getBalance(account);
+                    document.getElementById('batchTokenBalance').innerText = `Balance: ${Number(web3.utils.fromWei(balance, 'ether')).toLocaleString()} ELON`;
+                    document.getElementById('balanceLabel').innerText = 'ELON Balance';
+                    document.getElementById('batchTokenAddress').style.display = 'none';
+                    document.getElementById('tokenAddressLabel').style.display = 'none';
+                    document.getElementById('authorizeBatchButton').style.display = 'none';
+                    document.getElementById('batchTransferButton').disabled = false;
+                } catch (error) {
+                    console.error("ELON balance error:", error);
+                    document.getElementById('batchTokenBalance').innerText = 'Balance: Failed to fetch';
+                    document.getElementById('batchTransferButton').disabled = true;
+                }
+            } else {
+                const tokenAddress = document.getElementById('batchTokenAddress').value.trim();
+                document.getElementById('batchTokenAddress').style.display = 'block';
+                document.getElementById('tokenAddressLabel').style.display = 'block';
+                document.getElementById('authorizeBatchButton').style.display = 'block';
+                document.getElementById('balanceLabel').innerText = 'Token Balance';
+                if (!web3.utils.isAddress(tokenAddress)) {
+                    document.getElementById('batchTokenBalance').innerText = 'Balance: Enter valid token address';
+                    document.getElementById('authorizeBatchButton').disabled = true;
+                    document.getElementById('batchTransferButton').disabled = true;
+                    return;
+                }
+                try {
+                    tokenContract = new web3.eth.Contract(erc20Abi, web3.utils.toChecksumAddress(tokenAddress));
+                    const balance = await tokenContract.methods.balanceOf(account).call();
+                    document.getElementById('batchTokenBalance').innerText = `Balance: ${Number(web3.utils.fromWei(balance, 'ether')).toLocaleString()}`;
+                    await checkAuthorizationStatus();
+                } catch (error) {
+                    console.error("Token status error:", error);
+                    document.getElementById('batchTokenBalance').innerText = 'Balance: Check token address';
+                    document.getElementById('authorizeBatchButton').disabled = true;
+                    document.getElementById('batchTransferButton').disabled = true;
+                    document.getElementById('dogMessage').innerText = getRandomMessage('invalidToken');
+                }
             }
         }
 
         async function checkAuthorizationStatus() {
-            if (!web3 || !account || !tokenContract) {
+            if (!web3 || !account || document.getElementById('transferType').value === 'elon') {
                 document.getElementById('authorizeBatchButton').disabled = true;
-                document.getElementById('batchTransferButton').disabled = true;
+                document.getElementById('batchTransferButton').disabled = false;
                 return;
             }
             const list = document.getElementById('batchTransferList').value.trim().split('\n').filter(line => line.trim() !== '');
@@ -472,11 +521,12 @@
             const status = document.getElementById('networkStatus');
             const transferButton = document.getElementById('batchTransferButton');
             const dogMessage = document.getElementById('dogMessage');
+            const transferType = document.getElementById('transferType').value;
             const tokenAddress = document.getElementById('batchTokenAddress').value.trim();
             const list = document.getElementById('batchTransferList').value.trim().split('\n').filter(line => line.trim() !== '');
 
-            if (!web3 || !account || !tokenContract) {
-                status.innerText = "Please connect wallet or enter valid token address.";
+            if (!web3 || !account) {
+                status.innerText = "Please connect wallet.";
                 dogMessage.innerText = getRandomMessage('connectFail');
                 return;
             }
@@ -514,43 +564,68 @@
                 status.innerText = "Checking balance and gas...";
                 dogMessage.innerText = getRandomMessage('batchStart');
 
-                const balance = await tokenContract.methods.balanceOf(account).call();
-                if (web3.utils.toBN(balance).lt(totalAmount)) {
-                    status.innerText = "Insufficient token balance.";
-                    dogMessage.innerText = getRandomMessage('insufficientBalance');
-                    return;
-                }
-
-                const allowance = await tokenContract.methods.allowance(account, WoofBatchTransferAddress).call();
-                if (web3.utils.toBN(allowance).lt(totalAmount)) {
-                    status.innerText = "Please authorize token first.";
-                    dogMessage.innerText = getRandomMessage('insufficientAllowance');
-                    return;
-                }
-
                 const gasPrice = await web3.eth.getGasPrice();
-                const estimatedGas = await batchTransferContract.methods.batchTransfer(
-                    tokenAddress,
-                    recipients,
-                    amounts
-                ).estimateGas({ from: account });
                 const nativeBalance = await web3.eth.getBalance(account);
-                const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(estimatedGas));
-                if (web3.utils.toBN(nativeBalance).lt(gasCost)) {
-                    status.innerText = "Insufficient ELON for gas.";
-                    dogMessage.innerText = getRandomMessage('insufficientGas');
-                    return;
-                }
 
-                const tx = await batchTransferContract.methods.batchTransfer(
-                    tokenAddress,
-                    recipients,
-                    amounts
-                ).send({
-                    from: account,
-                    gas: web3.utils.toHex(Math.min(estimatedGas * 2, 10000000))
-                });
-                await waitForTransaction(tx.transactionHash);
+                if (transferType === 'elon') {
+                    const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(300000 * recipients.length));
+                    if (web3.utils.toBN(nativeBalance).lt(totalAmount.add(gasCost))) {
+                        status.innerText = "Insufficient ELON for transfer or gas.";
+                        dogMessage.innerText = getRandomMessage('insufficientBalance');
+                        return;
+                    }
+                    const estimatedGas = await batchTransferContract.methods.batchNativeTransfer(
+                        recipients,
+                        amounts
+                    ).estimateGas({ from: account, value: totalAmount });
+                    const tx = await batchTransferContract.methods.batchNativeTransfer(
+                        recipients,
+                        amounts
+                    ).send({
+                        from: account,
+                        value: totalAmount,
+                        gas: web3.utils.toHex(Math.min(estimatedGas * 2, 10000000))
+                    });
+                    await waitForTransaction(tx.transactionHash);
+                } else {
+                    if (!web3.utils.isAddress(tokenAddress)) {
+                        status.innerText = "Invalid token address.";
+                        dogMessage.innerText = getRandomMessage('invalidToken');
+                        return;
+                    }
+                    const balance = await tokenContract.methods.balanceOf(account).call();
+                    if (web3.utils.toBN(balance).lt(totalAmount)) {
+                        status.innerText = "Insufficient token balance.";
+                        dogMessage.innerText = getRandomMessage('insufficientBalance');
+                        return;
+                    }
+                    const allowance = await tokenContract.methods.allowance(account, WoofBatchTransferAddress).call();
+                    if (web3.utils.toBN(allowance).lt(totalAmount)) {
+                        status.innerText = "Please authorize token first.";
+                        dogMessage.innerText = getRandomMessage('insufficientAllowance');
+                        return;
+                    }
+                    const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(100000 * recipients.length));
+                    if (web3.utils.toBN(nativeBalance).lt(gasCost)) {
+                        status.innerText = "Insufficient ELON for gas.";
+                        dogMessage.innerText = getRandomMessage('insufficientGas');
+                        return;
+                    }
+                    const estimatedGas = await batchTransferContract.methods.batchTransfer(
+                        tokenAddress,
+                        recipients,
+                        amounts
+                    ).estimateGas({ from: account });
+                    const tx = await batchTransferContract.methods.batchTransfer(
+                        tokenAddress,
+                        recipients,
+                        amounts
+                    ).send({
+                        from: account,
+                        gas: web3.utils.toHex(Math.min(estimatedGas * 2, 10000000))
+                    });
+                    await waitForTransaction(tx.transactionHash);
+                }
 
                 status.innerText = "Batch transfer successful!";
                 dogMessage.innerText = getRandomMessage('batchSuccess');
@@ -560,8 +635,8 @@
                 if (error.code === 4001) {
                     status.innerText = "Transaction canceled by user.";
                     dogMessage.innerText = getRandomMessage('userDenied');
-                } else if (error.message.includes('insufficient funds for gas')) {
-                    status.innerText = "Insufficient ELON for gas.";
+                } else if (error.message.includes('insufficient funds for gas') || error.message.includes('Insufficient ELON sent')) {
+                    status.innerText = "Insufficient ELON for gas or transfer.";
                     dogMessage.innerText = getRandomMessage('insufficientGas');
                 } else if (error.message.includes('Invalid token address') || error.message.includes('Token address is not a contract')) {
                     status.innerText = "Check token address and try again.";
@@ -569,8 +644,8 @@
                 } else if (error.message.includes('Arrays length mismatch') || error.message.includes('Exceeds max batch size')) {
                     status.innerText = "Invalid input or exceeds 200 addresses.";
                     dogMessage.innerText = getRandomMessage('invalidInput');
-                } else if (error.message.includes('Transfer failed')) {
-                    status.innerText = "Transfer failed, check token contract.";
+                } else if (error.message.includes('Transfer failed') || error.message.includes('Native transfer failed')) {
+                    status.innerText = "Transfer failed, check token contract or recipient.";
                     dogMessage.innerText = getRandomMessage('batchFail');
                 } else {
                     status.innerText = "Batch transfer failed: " + (error.message || "Unknown error");
@@ -587,8 +662,13 @@
         document.getElementById('batchTransferButton').addEventListener('click', batchTransfer);
         document.getElementById('batchTokenAddress').addEventListener('input', checkTokenStatus);
         document.getElementById('batchTransferList').addEventListener('input', checkAuthorizationStatus);
+        document.getElementById('transferType').addEventListener('change', () => {
+            checkTokenStatus();
+            checkAuthorizationStatus();
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
+            checkTokenStatus();
             checkAuthorizationStatus();
         });
     </script>
