@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaceswap - Swap</title>
+    <title>WoofSwap - Swap</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="https://woofingjace.com/images/elon.png" type="image/x-icon">
     <style>
@@ -252,7 +252,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">Jaceswap</div>
+        <div class="header">WoofSwap</div>
         <div class="connect-section">
             <button id="connectWalletButton">Connect Wallet</button>
             <div id="networkStatus" class="status">Click to connect...</div>
@@ -293,7 +293,7 @@
                 <span>▼</span>
             </div>
             <div class="slippage-info">Default Slippage: 0.5%</div>
-            <div class="swap-note" id="swapNote">Amount automatically calculated by Jaceswap</div>
+            <div class="swap-note" id="swapNote">Amount automatically calculated by WoofSwap</div>
         </div>
         <button class="swap-button" id="swapButton" onclick="swapTokens()">Swap</button>
         <div class="dog-section">
@@ -310,7 +310,7 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
     <script>
         const tokens = [
-            { address: "0x6a267196D0B330283416F19DFA0Cf75511BA83bE", symbol: "EDOG", logo: "https://woofswap.finance/image/tokens/edog.png" }
+            { address: "0x6a267196D0B330283416F19DFA0Cf75511BA83bE", symbol: "EDOG", logo: "https://woofswap.finance/image/tokens/edog.png?1" }
         ];
         const ELONToken = { address: "0x19ecB643988dB8beA1Ff528E6D91dB559b70F181", symbol: "ELON", logo: "https://woofingjace.com/images/elon.png", isNative: true };
         const routerAddress = "0xF3BC0C7acf2FBD4A4E545ce770Bf909033e2F899";
@@ -365,7 +365,7 @@
             calcSuccess: (amount, symbol) => [`Arf! Found ya ${amount} ${symbol}! Ready to swap, pup?`,`Woof woof! Snagged ${amount} ${symbol}, let’s roll!`,`Yip yip! Dug up ${amount} ${symbol}, happy tail wags!`,`Bow wow! ${amount} ${symbol} sniffed out, swap time!`],
             calcFail: ["Grrr... No path for these ELONs, try a new pair, pup!","Woof? Swap trail’s cold, pick another token, hooman!","Arf arf! Couldn’t fetch the output, let’s retry!","Ruff! Swap math barked up, give it another go!"],
             swapStart: ["Woof woof! Swapping time, let’s fetch those tokens!","Arf! Launching the swap, hold onto your leash, pup!","Bow wow! Trading ELONs, here we go, Jace style!","Yip! Swapping in Rufus Chain, let’s make it pawsome!"],
-            swapSuccess: ["Arf arf! Swap done, you’re a Jaceswap champ, hooman!","Woof! Tokens fetched, tail-wagging success, pup!","Bow wow! Swapped like a pro, time to celebrate!","Yip yip! Swap complete, you’re the top dog now!"],
+            swapSuccess: ["Arf arf! Swap done, you’re a WoofSwap champ, hooman!","Woof! Tokens fetched, tail-wagging success, pup!","Bow wow! Swapped like a pro, time to celebrate!","Yip yip! Swap complete, you’re the top dog now!"],
             swapFail: ["Grrr... Swap didn’t work, let’s try again, pup!","Woof? Swap got lost, retry it, clever hooman!","Arf! Token chase failed, another go, Jace friend?","Ruff ruff! Swap slipped, let’s dig it up again!"],
             swapNoToken: ["Woof? Missing a token, pup! Pick one first!","Arf arf! No treats to swap, choose a pair, hooman!","Bow wow! Where’s the token? Let’s sniff one out!","Yip! Can’t swap air, pick a token, Jace pal!"],
             swapNoAmount: ["Arf! No amount? How am I supposed to swap air?!","Woof woof! Gimme a number, pup, or we’re stuck!","Bow wow! Empty swap? Fill it up, hooman!","Ruff! Amount’s missing, let’s fetch some digits!"],
@@ -418,13 +418,13 @@
             }
         }
 
-        async function switchToXLayer() {
+        async function switchToRufusChain() {
             const chainId = await web3.eth.getChainId();
             if (Number(chainId) !== 2420) {
                 try {
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: "0xc4" }]
+                        params: [{ chainId: "0x974" }]
                     });
                 } catch (switchError) {
                     if (switchError.code === 4902) {
@@ -593,7 +593,7 @@
             const swapNote = document.getElementById('swapNote');
             const dogMessage = document.getElementById('dogMessage');
             if (!web3 || !account || !toToken || !amountIn || amountIn <= 0) {
-                swapNote.innerHTML = 'Amount automatically calculated by Jaceswap';
+                swapNote.innerHTML = 'Amount automatically calculated by WoofSwap';
                 return;
             }
             let amountInWei;
